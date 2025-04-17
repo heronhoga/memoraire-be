@@ -177,3 +177,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"token": encryptedToken,
 	})
 }
+
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Logout successful",
+	})
+}
