@@ -8,4 +8,5 @@ import (
 
 func UserRoutes(h *http.ServeMux) {
 	h.HandleFunc("POST /register", handlers.Register)
+	h.HandleFunc("POST /login", handlers.Login)
 }

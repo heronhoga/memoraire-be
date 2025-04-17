@@ -9,6 +9,7 @@ import (
 	"github.com/heronhoga/memoraire-be/models"
 	"github.com/heronhoga/memoraire-be/requests"
 	"github.com/heronhoga/memoraire-be/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -109,4 +110,46 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//find existing user
+	var existingUser models.User
+
+	findUsername := config.DB.Where("username = ?", userLoginRequest.Username).First(&existingUser)
+	if findUsername.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Wrong username or password",
+		})
+		return
+	}
+
+	//match the password
+	errMatchPassword := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(userLoginRequest.Password))
+	if errMatchPassword != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Wrong username or password",
+		})
+		return
+	}
+
+	//generate token
+	jwtToken, errGenerateJwt := utils.GenerateJWT(existingUser.Username)
+	if errGenerateJwt != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Internal server error",
+		})
+		return
+	}
+
+	//return success response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Login successful",
+		"token": jwtToken,
+	})
 }
