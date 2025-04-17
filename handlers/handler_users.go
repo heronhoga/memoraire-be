@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -23,8 +22,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	fmt.Printf("Received: %+v\n", userRequest)
 
 	//validate the request
 	validate := validator.New()
@@ -62,14 +59,22 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	insertNewUser := config.DB.Create(&newUser)
 
 	if insertNewUser.Error != nil || insertNewUser.RowsAffected == 0 {
+		if insertNewUser.Error.Error() == "ERROR: duplicate key value violates unique constraint \"uni_users_username\" (SQLSTATE 23505)" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message": "Username already exists",
+			})
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "Registration failed",
-			"error": insertNewUser.Error,
 		})
 		return
 	}
+	
 
 	// response
 	w.Header().Set("Content-Type", "application/json")
@@ -77,4 +82,31 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Registration successful",
 	})
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	var userLoginRequest requests.RequestLogin
+
+	err := json.NewDecoder(r.Body).Decode(&userLoginRequest)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid request payload",
+		})
+		return
+	}
+
+	//validate the request
+	validate := validator.New()
+	errValidate := validate.Struct(userLoginRequest)
+
+	if errValidate != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Login failed",
+		})
+		return
+	}
+
 }
