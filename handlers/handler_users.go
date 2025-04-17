@@ -180,6 +180,21 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 
 func Logout(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println(r.Context().Value("user_id").(string))
+
+	//remove token from database
+	userId := r.Context().Value("user_id").(string)
+	removeToken := config.DB.Model(&models.User{}).Where("username = ?", userId).Update("session", "")
+
+
+	if removeToken.RowsAffected == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Logout failed",
+		})
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Logout successful",
