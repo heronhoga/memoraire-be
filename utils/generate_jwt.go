@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 )
+
 func GenerateJWT(userId string) (string, error) {
 	err := godotenv.Load()
 	if err != nil {

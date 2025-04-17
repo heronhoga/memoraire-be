@@ -1,9 +1,15 @@
 package utils
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
 func CheckToken(next http.Handler) http.Handler {
@@ -14,15 +20,56 @@ func CheckToken(next http.Handler) http.Handler {
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-		//decrypt token
-		decryptedJWT, err := Decrypt(token)
+		decryptedToken, err := Decrypt(tokenStr)
 		if err != nil {
-			fmt.Println(err)
+		    http.Error(w, "Unauthorized: Decryption failed", http.StatusUnauthorized)
+		    return
 		}
-		fmt.Println(decryptedJWT)
 
-		next.ServeHTTP(w, r)
+		// Load secret
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+			return
+		}
+		jwtSecret := os.Getenv("JWT_KEY")
+
+		// Parse and verify token
+		token, err := jwt.Parse(decryptedToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(jwtSecret), nil
+		})
+
+		if err != nil || !token.Valid {
+			http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Extract claims
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			userID, ok := claims["user_id"].(string)
+			if !ok {
+				http.Error(w, "Unauthorized: Invalid user_id", http.StatusUnauthorized)
+				return
+			}
+
+			issuer, ok := claims["iss"].(string)
+			if !ok || issuer != "memoraire" {
+				http.Error(w, "Unauthorized: Invalid issuer", http.StatusUnauthorized)
+				return
+			}
+
+			// Save to context
+			ctx := context.WithValue(r.Context(), "user_id", userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		http.Error(w, "Unauthorized: Invalid claims", http.StatusUnauthorized)
 	})
 }
+
