@@ -145,11 +145,35 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//encrypt token
+	encryptedToken, errEncryptToken := utils.Encrypt(jwtToken)
+	if errEncryptToken != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Internal server error",
+		})
+		return
+	}
+
+	//store encrypted token to database
+	existingUser.Session = encryptedToken
+	updateUserToken := config.DB.Where("username = ?", existingUser.Username).Save(&existingUser)
+
+	if updateUserToken.Error != nil || updateUserToken.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Internal server error",
+		})
+		return
+	}
+
 	//return success response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Login successful",
-		"token": jwtToken,
+		"token": encryptedToken,
 	})
 }
