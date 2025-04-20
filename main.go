@@ -22,6 +22,7 @@ func main() {
 	
 	//routes
 	routes.UserRoutes(httpServer)
+	routes.MemoRoutes(httpServer)
 
 	fmt.Println("Memoraire backend is listening at port:", os.Getenv("APP_PORT"))
 	http.ListenAndServe(":" + os.Getenv("APP_PORT"), httpServer)

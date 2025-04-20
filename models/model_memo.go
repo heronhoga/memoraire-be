@@ -1,7 +1,7 @@
 package models
 
 import (
-
+	"time"
 	"github.com/google/uuid"
 )
 
@@ -11,4 +11,6 @@ type Memo struct {
 	Note	 	string    `json:"note"`
 	UserID      uuid.UUID `gorm:"type:uuid;not null"`
 	User        User      `gorm:"foreignKey:UserID;references:ID"`
+	CreatedAt 	time.Time `json:"created_at"`
+	UpdatedAt 	time.Time `json:"updated_at"`
 }
