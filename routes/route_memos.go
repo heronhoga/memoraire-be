@@ -10,4 +10,5 @@ import (
 func MemoRoutes(h *http.ServeMux) {
 	//protected routes
 	h.Handle("POST /memo/create", utils.CheckToken((http.HandlerFunc(handlers.CreateMemo))))
+	h.Handle("GET /memo", utils.CheckToken((http.HandlerFunc(handlers.ReadMemo))))
 }

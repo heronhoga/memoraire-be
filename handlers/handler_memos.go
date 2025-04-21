@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/heronhoga/memoraire-be/config"
@@ -36,7 +37,12 @@ func CreateMemo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//find user id
-	userId := r.Context().Value("user_id").(string)
+	userId, ok := r.Context().Value("user_id").(string)
+	if !ok || userId == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var existingUser models.User
 
 	findUser := config.DB.Where("username = ?", userId).First(&existingUser)
@@ -73,4 +79,65 @@ func CreateMemo(w http.ResponseWriter, r *http.Request) {
 		"message": "New Memo successfully created",
 	})
 
+}
+
+func ReadMemo(w http.ResponseWriter, r *http.Request) {
+	// Get query params
+	totalItems := r.URL.Query().Get("items")
+	if totalItems == "" {
+		totalItems = "9"
+	}
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		page = "1"
+	}
+
+	totalItemsInt, err := strconv.Atoi(totalItems)
+	if err != nil || totalItemsInt <= 0 {
+		http.Error(w, "Invalid items value", http.StatusBadRequest)
+		return
+	}
+	pageInt, err := strconv.Atoi(page)
+	if err != nil || pageInt <= 0 {
+		http.Error(w, "Invalid page value", http.StatusBadRequest)
+		return
+	}
+
+	// Get user ID from context
+	username, ok := r.Context().Value("user_id").(string)
+	if !ok || username == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var existingUser models.User
+
+	findUserId := config.DB.Where("username = ?", username).First(&existingUser)
+	if findUserId.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "User not available",
+		})
+		return
+	}
+
+
+	// Calculate offset
+	offset := (pageInt - 1) * totalItemsInt
+
+	// Fetch memos
+	var memos []models.Memo
+	result := config.DB.Where("user_id = ?", existingUser.ID).Limit(totalItemsInt).Offset(offset).Find(&memos)
+	if result.Error != nil {
+		http.Error(w, "Failed to retrieve memos", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Memo succesfully retrieved",
+		"memo": memos,
+	})
 }
