@@ -122,7 +122,6 @@ func ReadMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	// Calculate offset
 	offset := (pageInt - 1) * totalItemsInt
 
@@ -139,5 +138,75 @@ func ReadMemo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Memo succesfully retrieved",
 		"memo": memos,
+	})
+}
+
+func UpdateMemo(w http.ResponseWriter, r *http.Request) {
+	var newUpdateMemoRequest requests.RequestUpdateMemo
+
+	err := json.NewDecoder(r.Body).Decode(&newUpdateMemoRequest)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid request payload",
+		})
+		return
+	}
+
+	//validate the request
+	validate := validator.New()
+	errValidate := validate.Struct(newUpdateMemoRequest)
+
+	if errValidate != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Create memo failed",
+		})
+		return
+	}
+
+	// Get user ID from context
+	username, ok := r.Context().Value("user_id").(string)
+	if !ok || username == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var existingUser models.User
+
+	findUserId := config.DB.Where("username = ?", username).First(&existingUser)
+	if findUserId.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "User not available",
+		})
+		return
+	}
+
+	//update the data
+	updateMemo := config.DB.Exec(`
+    UPDATE memos 
+    SET date = ?, note = ? 
+    WHERE memos.id = ?`,
+    newUpdateMemoRequest.Date,
+    newUpdateMemoRequest.Note,
+    newUpdateMemoRequest.MemoId,
+	)
+
+	if updateMemo.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Update memo failed",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Update memo successful",
 	})
 }
