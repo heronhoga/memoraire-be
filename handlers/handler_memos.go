@@ -64,7 +64,16 @@ func CreateMemo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	saveMemo := config.DB.Create(&newMemo)
-	if saveMemo.RowsAffected == 0 {
+	if saveMemo.Error != nil || saveMemo.RowsAffected == 0 {
+		if saveMemo.Error.Error() == "ERROR: duplicate key value violates unique constraint \"uni_memos_date\" (SQLSTATE 23505)" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message": "Memo already exists",
+			})
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -161,7 +170,7 @@ func UpdateMemo(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"message": "Create memo failed",
+			"message": "Update memo failed",
 		})
 		return
 	}
@@ -208,5 +217,67 @@ func UpdateMemo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Update memo successful",
+	})
+}
+
+func DeleteMemo(w http.ResponseWriter, r *http.Request) {
+	var newDeleteMemoRequest requests.RequestDeleteMemo
+
+	err := json.NewDecoder(r.Body).Decode(&newDeleteMemoRequest)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid request payload",
+		})
+		return
+	}
+
+	//validate the request
+	validate := validator.New()
+	errValidate := validate.Struct(newDeleteMemoRequest)
+
+	if errValidate != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Delete memo failed",
+		})
+		return
+	}
+
+	// Get user ID from context
+	username, ok := r.Context().Value("user_id").(string)
+	if !ok || username == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var existingUser models.User
+
+	findUserId := config.DB.Where("username = ?", username).First(&existingUser)
+	if findUserId.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "User not available",
+		})
+		return
+	}
+
+	deleteMemo := config.DB.Exec(`DELETE FROM memos WHERE memos.id = ? AND memos.user_id = ?`, newDeleteMemoRequest.MemoId, existingUser.ID)
+
+	if deleteMemo.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Delete memo failed",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Delete memo successful",
 	})
 }
