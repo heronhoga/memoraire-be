@@ -204,7 +204,16 @@ func UpdateMemo(w http.ResponseWriter, r *http.Request) {
     newUpdateMemoRequest.MemoId,
 	)
 
-	if updateMemo.RowsAffected == 0 {
+	if updateMemo.Error != nil || updateMemo.RowsAffected == 0 {
+		if updateMemo.Error.Error() == "ERROR: duplicate key value violates unique constraint \"uni_memos_date\" (SQLSTATE 23505)" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message": "Memo already exists",
+			})
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
