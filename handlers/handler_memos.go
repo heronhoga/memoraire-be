@@ -136,7 +136,13 @@ func ReadMemo(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch memos
 	var memos []models.Memo
-	result := config.DB.Where("user_id = ?", existingUser.ID).Limit(totalItemsInt).Offset(offset).Find(&memos)
+	result := config.DB.
+    Where("user_id = ?", existingUser.ID).
+    Order("date DESC").
+    Limit(totalItemsInt).
+    Offset(offset).
+    Find(&memos)
+
 	if result.Error != nil {
 		http.Error(w, "Failed to retrieve memos", http.StatusInternalServerError)
 		return
