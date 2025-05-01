@@ -101,6 +101,8 @@ func ReadMemo(w http.ResponseWriter, r *http.Request) {
 		page = "1"
 	}
 
+	date := r.URL.Query().Get("date")
+
 	totalItemsInt, err := strconv.Atoi(totalItems)
 	if err != nil || totalItemsInt <= 0 {
 		http.Error(w, "Invalid items value", http.StatusBadRequest)
@@ -136,16 +138,28 @@ func ReadMemo(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch memos
 	var memos []models.Memo
-	result := config.DB.
-    Where("user_id = ?", existingUser.ID).
-    Order("date DESC").
-    Limit(totalItemsInt).
-    Offset(offset).
-    Find(&memos)
-
-	if result.Error != nil {
-		http.Error(w, "Failed to retrieve memos", http.StatusInternalServerError)
-		return
+	if date == "" {
+		result := config.DB.
+		Where("user_id = ?", existingUser.ID).
+		Order("date DESC").
+		Limit(totalItemsInt).
+		Offset(offset).
+		Find(&memos)
+	
+		if result.Error != nil {
+			http.Error(w, "Failed to retrieve memos", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		result := config.DB.
+		Where("user_id = ?", existingUser.ID).
+		Where("date = ?", date).
+		Find(&memos)
+	
+		if result.Error != nil {
+			http.Error(w, "Failed to retrieve memos", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
