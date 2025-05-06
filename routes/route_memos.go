@@ -9,8 +9,8 @@ import (
 
 func MemoRoutes(h *http.ServeMux) {
 	//protected routes
-	h.Handle("POST /memo/create", utils.WithMiddleware(handlers.CreateMemo, utils.CheckKey, utils.CheckToken))
-	h.Handle("GET /memo", utils.WithMiddleware(handlers.ReadMemo, utils.CheckKey, utils.CheckToken))
-	h.Handle("PUT /memo", utils.WithMiddleware(handlers.UpdateMemo, utils.CheckKey, utils.CheckToken))
-	h.Handle("DELETE /memo", utils.WithMiddleware(handlers.DeleteMemo, utils.CheckKey, utils.CheckToken))
+	h.Handle("POST /api/memo/create", utils.WithMiddleware(handlers.CreateMemo, utils.CheckKey, utils.CheckToken))
+	h.Handle("GET /api/memo", utils.WithMiddleware(handlers.ReadMemo, utils.CheckKey, utils.CheckToken))
+	h.Handle("PUT /api/memo", utils.WithMiddleware(handlers.UpdateMemo, utils.CheckKey, utils.CheckToken))
+	h.Handle("DELETE /api/memo", utils.WithMiddleware(handlers.DeleteMemo, utils.CheckKey, utils.CheckToken))
 }

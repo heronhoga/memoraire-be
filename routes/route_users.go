@@ -9,9 +9,9 @@ import (
 
 func UserRoutes(h *http.ServeMux) {
 	// Public routes
-	h.Handle("POST /register", utils.WithMiddleware(handlers.Register, utils.CheckKey))
-	h.Handle("POST /login", utils.WithMiddleware(handlers.Login, utils.CheckKey))
+	h.Handle("POST /api/register", utils.WithMiddleware(handlers.Register, utils.CheckKey))
+	h.Handle("POST /api/login", utils.WithMiddleware(handlers.Login, utils.CheckKey))
 
 	// Protected route
-	h.Handle("GET /logout", utils.WithMiddleware(handlers.Logout, utils.CheckKey, utils.CheckToken))
+	h.Handle("GET /api/logout", utils.WithMiddleware(handlers.Logout, utils.CheckKey, utils.CheckToken))
 }
