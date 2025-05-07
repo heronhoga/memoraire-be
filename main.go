@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -13,11 +12,7 @@ import (
 
 func main() {
 	httpServer := http.NewServeMux()
-	err := godotenv.Load()
-	if err != nil {
-	  log.Fatal("Error loading .env file")
-	  return
-	}
+	_ = godotenv.Load()
 	config.DatabaseInit()
 	
 	//routes
