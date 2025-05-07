@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -32,11 +31,7 @@ func CheckToken(next http.Handler) http.Handler {
 		}
 
 		// Load secret
-		err = godotenv.Load()
-		if err != nil {
-			log.Fatal("Error loading .env file")
-			return
-		}
+		_ = godotenv.Load()
 		jwtSecret := os.Getenv("JWT_KEY")
 
 		// Parse and verify token

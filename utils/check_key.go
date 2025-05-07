@@ -15,10 +15,7 @@ var (
 )
 
 func loadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: Error loading .env file")
-	}
+	_ = godotenv.Load()
 	appKey = os.Getenv("APP_KEY")
 	if appKey == "" {
 		log.Println("Warning: APP_KEY not set")

@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,11 +13,7 @@ import (
 
 func Encrypt(token string) (string, error) {
 	//load env
-	err := godotenv.Load()
-	if err != nil {
-	  log.Fatal("Error loading .env file")
-	  return "", err
-	}
+	_ = godotenv.Load()
 	
 	key := os.Getenv("AES_KEY")
 	iv := os.Getenv("AES_IV")
@@ -62,11 +57,7 @@ func PKCS5UnPadding(src []byte) []byte {
 
 func Decrypt(encryptedToken string) (string, error) {
 	//load env
-	err := godotenv.Load()
-	if err != nil {
-	  log.Fatal("Error loading .env file")
-	  return "", err
-	}
+	_ = godotenv.Load()
 	
 	key := os.Getenv("AES_KEY")
 	iv := os.Getenv("AES_IV")

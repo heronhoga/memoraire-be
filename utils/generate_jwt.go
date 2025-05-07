@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"time"
 
@@ -10,11 +9,7 @@ import (
 )
 
 func GenerateJWT(userId string) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-	  log.Fatal("Error loading .env file")
-	  return "", err
-	}
+	_ = godotenv.Load()
 
 	//jwt secret
 	var jwtSecret = os.Getenv("JWT_KEY")

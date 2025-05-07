@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/heronhoga/memoraire-be/models"
@@ -14,11 +13,7 @@ import (
 var DB *gorm.DB
 
 func DatabaseInit() {
-	err := godotenv.Load()
-	if err != nil {
-	  log.Fatal("Error loading .env file")
-	  return
-	}
+	_ = godotenv.Load()
 
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
