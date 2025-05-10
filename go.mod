@@ -13,7 +13,7 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
-require github.com/rs/cors v1.11.1 // indirect
+require github.com/rs/cors v1.11.1
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect

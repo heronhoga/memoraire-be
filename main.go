@@ -22,7 +22,7 @@ func main() {
 
 	//cors
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://memoraire.web.id", "https://localhost:3000", "http://memoraire.web.id", "http://memoraire.web.id:3030", "https://memoraire.web.id:3030"},
+		AllowedOrigins:   []string{"http://localhost:3000", "https://memoraire.web.id", "https://localhost:3000", "http://memoraire.web.id", "http://memoraire.web.id:3030", "https://memoraire.web.id:3030", "http://memoraire.web.id:3000", "https://memoraire.web.id:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "hgtoken"},
 		AllowCredentials: true,
