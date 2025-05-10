@@ -27,6 +27,7 @@ func CheckKey(next http.Handler) http.Handler {
 		once.Do(loadEnv)
 
 		keyHeader := r.Header.Get("hgtoken")
+		log.Println("token from frontend: ", keyHeader)
 		if keyHeader == "" || keyHeader != appKey {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

@@ -26,6 +26,7 @@ func main() {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "hgtoken"},
 		AllowCredentials: true,
+		Debug: true,
 	})
 
 	httpWithCors := corsHandler.Handler(httpServer)
